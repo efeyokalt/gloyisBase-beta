@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gloyis — Projelerin Zemin Bulduğu Yer</title>
+    <link rel="icon" type="image/png" href="logo.jpeg">
+    <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+
+    <!-- ─── NAV ─── -->
+    <header class="nav">
+        <a class="nav-brand" href="index.html">
+            <img src="logo.jpeg" alt="Gloyis" />
+            <span class="nav-brand-name">GLOYIS</span>
+        </a>
+        <nav class="nav-links">
+            <a href="index.html">Ana Sayfa</a>
+            <a href="projects.html">Projeler</a>
+            <a href="#about">Hakkımızda</a>
+            <a href="#contact" class="nav-cta">İletişim</a>
+        </nav>
+    </header>
+
+
+    <!-- ─── HERO ─── -->
+    <section class="hero">
+        <div class="hero-grid-bg" aria-hidden="true"></div>
+        <div class="hero-ambient" aria-hidden="true"></div>
+
+        <!-- Ray-marched ASCII hologram logo -->
+        <pre id="holo-logo" aria-hidden="true"></pre>
+
+        <!-- Copy -->
+        <div class="hero-content">
+            <p class="hero-eyebrow">Gloyis — Çatı Yapısı</p>
+            <h1 class="hero-title">
+                Projelerin<br /><em>zemin bulduğu</em> yer.
+            </h1>
+            <p class="hero-sub">
+                Gloyis, potansiyel taşıyan projelere kurumsal çatı sunan bağımsız bir
+                yapıdır. Her proje kendi kimliğini korur; ortak altyapıdan güç alır.
+            </p>
+            <div class="hero-actions">
+                <a href="projects.html" class="btn btn-primary">Projeleri Gör →</a>
+                <a href="#about" class="btn btn-outline">Biz Kimiz</a>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        // ── Ray-marched 3D hologram logo ──────────────────────────────────────────
+        (function () {
+            const CW = 52;
+            const CH = 32;
+            const RAMP = " .:;=xX$&@W";
+            const CHAR_ASPECT = 0.5;
+
+            const abs = Math.abs, max = Math.max, min = Math.min, sqrt = Math.sqrt;
+
+            function len3(x, y, z) { return sqrt(x * x + y * y + z * z); }
+
+            function rotY(p, a) {
+                const c = Math.cos(a), s = Math.sin(a);
+                return [p[0] * c - p[2] * s, p[1], p[0] * s + p[2] * c];
+            }
+            function rotX(p, a) {
+                const c = Math.cos(a), s = Math.sin(a);
+                return [p[0], p[1] * c - p[2] * s, p[1] * s + p[2] * c];
+            }
+
+            function sdDiamond2D(px, py, cx, cy, size) {
+                const tx = px - cx, ty = py - cy;
+                const rx = (tx - ty) * 0.7071, ry = (tx + ty) * 0.7071;
+                const dx = abs(rx) - size, dy = abs(ry) - size;
+                return sqrt(max(dx, 0) ** 2 + max(dy, 0) ** 2) + min(max(dx, dy), 0);
+            }
+
+            function sdHeart(px, py, pz) {
+                const sy = py * 0.9;
+                const dBase = sdDiamond2D(px, sy, 0.0, -0.25, 0.60);
+                const dCut = sdDiamond2D(px, sy, 0.0, 0.45, 0.45);
+                let d2d = max(dBase, -dCut);
+                d2d = abs(d2d) - 0.08;
+                const dz = abs(pz) - 0.08;
+                return (sqrt(max(d2d, 0) ** 2 + max(dz, 0) ** 2) + min(max(d2d, dz), 0)) * 0.85;
+            }
+
+            function calcNormal(px, py, pz) {
+                const e = 0.001, d = sdHeart(px, py, pz);
+                const nx = sdHeart(px + e, py, pz) - d;
+                const ny = sdHeart(px, py + e, pz) - d;
+                const nz = sdHeart(px, py, pz + e) - d;
+                const l = len3(nx, ny, nz);
+                return [nx / l, ny / l, nz / l];
+            }
+
+            function buildFrame(t) {
+                let frame = "";
+                const ro = [0, 0, -2.5];
+                const ld = [0.5, 0.8, -1.0];
+                const ll = len3(ld[0], ld[1], ld[2]);
+                const ldn = [ld[0] / ll, ld[1] / ll, ld[2] / ll];
+
+                for (let y = 0; y < CH; y++) {
+                    for (let x = 0; x < CW; x++) {
+                        const nx = (x / (CW - 1)) * 2 - 1;
+                        const ny = -(y / (CH - 1)) * 2 + 1;
+                        const rd = [nx / CHAR_ASPECT, ny, 1.0];
+                        const rl = len3(rd[0], rd[1], rd[2]);
+                        const rdn = [rd[0] / rl, rd[1] / rl, rd[2] / rl];
+
+                        let td = 0, hit = false, p = [0, 0, 0];
+                        for (let i = 0; i < 45; i++) {
+                            p = [ro[0] + rdn[0] * td, ro[1] + rdn[1] * td, ro[2] + rdn[2] * td];
+                            p = rotY(p, t);
+                            p = rotX(p, Math.sin(t * 0.8) * 0.3);
+                            const d = sdHeart(p[0], p[1], p[2]);
+                            if (d < 0.005) { hit = true; break; }
+                            td += d;
+                            if (td > 5.0) break;
+                        }
+
+                        if (hit) {
+                            const n = calcNormal(p[0], p[1], p[2]);
+                            const diff = abs(n[0] * ldn[0] + n[1] * ldn[1] + n[2] * ldn[2]);
+                            const b = max(0, min(1, diff + 0.20));
+                            frame += RAMP[Math.floor(b * (RAMP.length - 1))];
+                        } else {
+                            frame += " ";
+                        }
+                    }
+                    frame += "\n";
+                }
+                return frame;
+            }
+
+            const el = document.getElementById('holo-logo');
+            let t = 0;
+            function tick() {
+                t += 0.007; // yavaş dönüş
+                el.textContent = buildFrame(t);
+                requestAnimationFrame(tick);
+            }
+            tick();
+        })();
+    </script>
+
+
+    <!-- ─── MARQUEE ─── -->
+    <div class="marquee" aria-hidden="true">
+        <div class="marquee-track">
+            <span class="marquee-item">Gloyis<span class="marquee-sep"></span></span>
+            <span class="marquee-item">Bağımsız Projeler<span class="marquee-sep"></span></span>
+            <span class="marquee-item">Ortak Altyapı<span class="marquee-sep"></span></span>
+            <span class="marquee-item">Uzun Vadeli Vizyon<span class="marquee-sep"></span></span>
+            <span class="marquee-item">Türkiye'den Dünyaya<span class="marquee-sep"></span></span>
+            <span class="marquee-item">Kurumsal Güç<span class="marquee-sep"></span></span>
+            <span class="marquee-item">Gloyis<span class="marquee-sep"></span></span>
+            <span class="marquee-item">Bağımsız Projeler<span class="marquee-sep"></span></span>
+            <span class="marquee-item">Ortak Altyapı<span class="marquee-sep"></span></span>
+            <span class="marquee-item">Uzun Vadeli Vizyon<span class="marquee-sep"></span></span>
+            <span class="marquee-item">Türkiye'den Dünyaya<span class="marquee-sep"></span></span>
+            <span class="marquee-item">Kurumsal Güç<span class="marquee-sep"></span></span>
+        </div>
+    </div>
+
+
+    <!-- ─── ABOUT ─── -->
+    <section class="about" id="about">
+        <div class="container">
+            <div class="about-grid">
+                <div class="about-text">
+                    <span class="label">— Hakkımızda</span>
+                    <h2 class="h2">Büyümeye hazır projelere<br /><em>ev sahipliği.</em></h2>
+                    <p>
+                        Gloyis, bünyesine aldığı projelere hukuki statü, teknik altyapı
+                        ve kurumsal ağ sunar. Her proje bağımsız kimliğini korurken
+                        ortak ekosistemin gücünden yararlanır.
+                    </p>
+                    <p>
+                        Sadece bir şirket değil — bir büyüme zemini. Uzun vadeli
+                        sürdürülebilirlik odağıyla inşa edilen her projeye destek veririz.
+                    </p>
+                </div>
+                <div class="stats-block">
+                    <div class="stat">
+                        <div class="stat-num">04+</div>
+                        <div class="stat-label">Aktif Proje</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-num">01</div>
+                        <div class="stat-label">Güçlü Çatı</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-num">∞</div>
+                        <div class="stat-label">Büyüme Pot.</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-num">7/24</div>
+                        <div class="stat-label">Operasyonel</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- ─── SERVICES ─── -->
+    <section class="services">
+        <div class="container">
+            <div class="services-header">
+                <div>
+                    <span class="label">— Sunduklarımız</span>
+                    <h2 class="h2">Gloyis çatısının<br /><em>avantajları.</em></h2>
+                </div>
+                <p>
+                    Her proje kendi kararlarını alır. Gloyis hiçbir zaman kontrolü
+                    değil, desteği temsil eder. Kurumsal güç; bağımsız kimlik.
+                </p>
+            </div>
+            <div class="service-list">
+                <div class="service-row">
+                    <span class="service-idx">01</span>
+                    <div class="service-name">
+                        Kurumsal Çatı
+                        <small>Hukuki statü, muhasebe ve organizasyon desteği</small>
+                    </div>
+                    <span class="service-arrow">↗</span>
+                </div>
+                <div class="service-row">
+                    <span class="service-idx">02</span>
+                    <div class="service-name">
+                        Teknik Altyapı
+                        <small>Sunucu, CI/CD, güvenlik ve DevOps kaynakları</small>
+                    </div>
+                    <span class="service-arrow">↗</span>
+                </div>
+                <div class="service-row">
+                    <span class="service-idx">03</span>
+                    <div class="service-name">
+                        Ağ & Ekosistem
+                        <small>Ortaklıklar, yatırımcı ağı ve pazar erişimi</small>
+                    </div>
+                    <span class="service-arrow">↗</span>
+                </div>
+                <div class="service-row">
+                    <span class="service-idx">04</span>
+                    <div class="service-name">
+                        Marka Güvencesi
+                        <small>Gloyis çatısının kurumsal güvenilirlik kalkanı</small>
+                    </div>
+                    <span class="service-arrow">↗</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- ─── VALUES ─── -->
+    <section class="values">
+        <div class="container">
+            <span class="label">— İlkelerimiz</span>
+            <h2 class="h2">Her projede taşıdığımız<br /><em>değerler.</em></h2>
+            <div class="values-grid">
+                <div class="value-card">
+                    <svg class="value-icon" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="1" y="1" width="34" height="34" stroke="#FF7A00" stroke-width="1.5"
+                            stroke-dasharray="4 4" />
+                        <circle cx="18" cy="18" r="6" stroke="#FF7A00" stroke-width="1.5" />
+                    </svg>
+                    <div class="value-title">Bağımsızlık</div>
+                    <p class="value-text">
+                        Her proje kendi hızında büyür, kendi kararlarını alır.
+                        Gloyis kontrol değil destek sunar.
+                    </p>
+                </div>
+                <div class="value-card">
+                    <svg class="value-icon" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <polygon points="18,2 34,34 2,34" stroke="#FF7A00" stroke-width="1.5" fill="none" />
+                        <line x1="18" y1="14" x2="18" y2="24" stroke="#FF7A00" stroke-width="1.5" />
+                        <circle cx="18" cy="27" r="1.5" fill="#FF7A00" />
+                    </svg>
+                    <div class="value-title">Şeffaflık</div>
+                    <p class="value-text">
+                        Tüm bünyedeki projelerle açık iletişim ve net anlaşmalar esastır.
+                        Güven inşa ederiz.
+                    </p>
+                </div>
+                <div class="value-card">
+                    <svg class="value-icon" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="18" cy="18" r="16" stroke="#FF7A00" stroke-width="1.5" />
+                        <path d="M18 10 L18 18 L24 22" stroke="#FF7A00" stroke-width="1.5" stroke-linecap="round" />
+                    </svg>
+                    <div class="value-title">Sürdürülebilirlik</div>
+                    <p class="value-text">
+                        Kısa vadeli çıkar değil uzun vadeli sağlık. Her karar gelecek
+                        gözetilerek alınır.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- ─── CONTACT ─── -->
+    <section class="contact" id="contact">
+        <div class="container">
+            <div class="contact-grid">
+
+                <!-- Left: info -->
+                <div class="contact-left">
+                    <span class="label">— Bize Ulaşın</span>
+                    <h2 class="h2">Bir sorunuz mu var?<br /><em>Yazın.</em></h2>
+                    <p>
+                        İş birliği teklifiniz, bünyemize katılmak istediğiniz bir proje
+                        ya da merakınız varsa her kanaldan ulaşabilirsiniz.
+                    </p>
+                    <div class="contact-channels">
+                        <a class="contact-item" href="mailto:info@gloyis.com">
+                            <div class="contact-ico">✉</div>
+                            <div>
+                                <span class="contact-lbl">E-posta</span>
+                                <span class="contact-val">info@gloyis.com</span>
+                            </div>
+                        </a>
+                        <a class="contact-item" href="tel:+902121234567">
+                            <div class="contact-ico">☎</div>
+                            <div>
+                                <span class="contact-lbl">Telefon</span>
+                                <span class="contact-val">+90 212 123 45 67</span>
+                            </div>
+                        </a>
+                        <a class="contact-item" href="#">
+                            <div class="contact-ico">⌖</div>
+                            <div>
+                                <span class="contact-lbl">Konum</span>
+                                <span class="contact-val">İstanbul, Türkiye</span>
+                            </div>
+                        </a>
+                        <a class="contact-item" href="#">
+                            <div class="contact-ico">𝕏</div>
+                            <div>
+                                <span class="contact-lbl">Sosyal</span>
+                                <span class="contact-val">@gloyis</span>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Right: form -->
+                <div class="contact-form">
+                    <p class="form-title">Mesaj Gönder</p>
+                    <div class="form-group">
+                        <label class="form-label">Ad Soyad</label>
+                        <input type="text" class="form-input" placeholder="İsminiz" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">E-posta</label>
+                        <input type="email" class="form-input" placeholder="ornek@mail.com" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Konu</label>
+                        <input type="text" class="form-input" placeholder="Konuyu belirtin" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Mesaj</label>
+                        <textarea class="form-textarea"
+                            placeholder="Projenizi veya sorunuzu kısaca açıklayın..."></textarea>
+                    </div>
+                    <button class="form-submit">Gönder →</button>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+
+    <!-- ─── FOOTER ─── -->
+    <footer class="footer">
+        <div class="footer-brand">
+            <img src="logo.jpeg" alt="Gloyis" />
+            <span class="footer-brand-name">GLOYIS</span>
+        </div>
+        <p class="footer-copy">© 2025 Gloyis. Tüm hakları saklıdır.</p>
+        <nav class="footer-links">
+            <a href="#">Gizlilik</a>
+            <a href="#">Kullanım</a>
+            <a href="projects.html">Projeler</a>
+            <a href="#contact">İletişim</a>
+        </nav>
+    </footer>
+
+</body>
+
+</html>
