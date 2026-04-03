@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gloyis — Projeler</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+
+  <header class="nav">
+    <a class="nav-brand" href="index.html">
+      <img src="logo.jpeg" alt="Gloyis" />
+      <span class="nav-brand-name">GLOYIS</span>
+    </a>
+    <nav class="nav-links">
+      <a href="index.html">Ana Sayfa</a>
+      <a href="projects.html">Projeler</a>
+      <a href="index.html#about">Hakkımızda</a>
+      <a href="index.html#contact" class="nav-cta">İletişim</a>
+    </nav>
+  </header>
+
+  <!-- MODAL -->
+  <div class="modal-overlay" id="modal-overlay">
+    <div class="modal-box" id="modal-box">
+      <button class="modal-close" id="modal-close">✕</button>
+
+      <div class="modal-visual" id="modal-visual">
+        <!-- JS ile doldurulacak -->
+      </div>
+
+      <div class="modal-detail" id="modal-detail">
+        <!-- JS ile doldurulacak -->
+      </div>
+    </div>
+  </div>
+
+  <section class="page-hero">
+    <div class="page-hero-bg" aria-hidden="true"></div>
+    <div class="page-hero-ambient" aria-hidden="true"></div>
+    <div class="page-hero-inner">
+      <div>
+        <span class="label">— Bünyemizdeki Projeler</span>
+        <h1 class="ph-title">Gloyis çatısı<br />altında <em>büyüyen</em><br />projeler.</h1>
+      </div>
+      <p class="ph-sub">Her proje bağımsız kimliğini korur. Karta tıklayarak detayları inceleyin.</p>
+    </div>
+  </section>
+
+  <section class="projects-section">
+    <div class="projects-inner">
+      <div class="projects-meta">
+        <p class="projects-count"><span>04</span> aktif proje</p>
+        <p class="projects-count">Gloyis · 2025</p>
+      </div>
+      <div class="cards-row" id="cards-row"></div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="footer-brand">
+      <img src="logo.jpeg" alt="Gloyis" />
+      <span class="footer-brand-name">GLOYIS</span>
+    </div>
+    <p class="footer-copy">© 2025 Gloyis. Tüm hakları saklıdır.</p>
+    <nav class="footer-links">
+      <a href="#">Gizlilik</a>
+      <a href="#">Kullanım</a>
+      <a href="projects.html">Projeler</a>
+      <a href="index.html#contact">İletişim</a>
+    </nav>
+  </footer>
+
+  <script>
+    // ── Proje verisi ──────────────────────────────────────────────────────────
+    // logo: kartın ön yüzünde gösterilen proje logosu
+    // screenshot: modal'ın sol panelinde gösterilen uygulama görseli
+    //   → null bırakırsanız logo placeholder gösterilir
+    const PROJECTS = [
+      {
+        id: 'nexora', name: 'Nexora', owner: 'Gloyis', tag: 'SaaS · B2B',
+        logo: 'logo.jpeg',        // proje logosu
+        screenshot: null,          // uygulama görseli — 'nexora-screenshot.jpg' gibi
+        desc: 'Kurumsal iş süreçlerini otomatikleştiren yapay zeka destekli SaaS platformu. KOBİ\'lere enterprise düzeyinde otomasyon sunar.',
+        team: [
+          { role: 'Project Lead', name: 'Ahmet Kaya' },
+          { role: 'Backend', name: 'Sercan Demir' },
+          { role: 'Frontend', name: 'Elif Şahin' },
+          { role: 'Designer', name: 'Mert Arslan' },
+        ], link: '#',
+      },
+      {
+        id: 'vaultex', name: 'Vaultex', owner: 'Gloyis', tag: 'Fintech · API',
+        logo: 'logo.jpeg',
+        screenshot: null,
+        desc: 'Geliştiricilere yönelik güvenli ödeme ve cüzdan altyapısı API\'si. Tek entegrasyonla çoklu ödeme kanallarını yönetir.',
+        team: [
+          { role: 'Project Lead', name: 'Burak Yıldız' },
+          { role: 'Backend', name: 'Can Öztürk' },
+          { role: 'Security', name: 'Hande Çelik' },
+          { role: 'DevOps', name: 'Oğuz Karan' },
+        ], link: '#',
+      },
+      {
+        id: 'soluna', name: 'Soluna', owner: 'Gloyis', tag: 'Media · Content',
+        logo: 'logo.jpeg',
+        screenshot: null,
+        desc: 'Yaratıcı içerik üreticileri için geliştirilmiş dijital yayın ve monetizasyon platformu. Bağımsız yayıncılığı sürdürülebilir kılar.',
+        team: [
+          { role: 'Project Lead', name: 'Zeynep Aydın' },
+          { role: 'Frontend', name: 'Kaan Doğan' },
+          { role: 'Designer', name: 'İpek Yılmaz' },
+          { role: 'Marketing', name: 'Deniz Kılıç' },
+        ], link: '#',
+      },
+      {
+        id: 'arkiv', name: 'Arkiv', owner: 'Gloyis', tag: 'Dev Tools',
+        logo: 'logo.jpeg',
+        screenshot: null,
+        desc: 'Yazılım ekipleri için yapılandırılmış dokümantasyon ve bilgi yönetim aracı. Kod tabanı ile dokümanlar arasındaki köprüyü kurar.',
+        team: [
+          { role: 'Project Lead', name: 'Furkan Şen' },
+          { role: 'Backend', name: 'Alp Güneş' },
+          { role: 'Frontend', name: 'Selin Kurt' },
+          { role: 'Designer', name: 'Bora Akın' },
+        ], link: '#',
+      },
+    ];
+
+    // ── Kartları render et ───────────────────────────────────────────────────
+    const row = document.getElementById('cards-row');
+
+    PROJECTS.forEach(proj => {
+      const wrap = document.createElement('div');
+      wrap.className = 'card-wrap';
+      wrap.dataset.id = proj.id;
+      wrap.innerHTML = `
+      <div class="card-inner">
+        <!-- Ön yüz -->
+        <div class="card-face card-face-front">
+          <div class="card-pattern"></div>
+          <span class="c-tr"></span>
+          <span class="c-bl"></span>
+          <div class="card-front-content">
+            <div class="cf-logo"><img src="${proj.logo}" alt="${proj.name}" /></div>
+            <div class="cf-name">${proj.name}</div>
+            <div class="cf-owner">${proj.owner}</div>
+            <div class="cf-tag">${proj.tag}</div>
+          </div>
+        </div>
+        <!-- Arka yüz (takla sırasında görünür, hemen modal açılır) -->
+        <div class="card-face card-face-back">
+          <div class="card-face-back-glow"></div>
+        </div>
+      </div>
+    `;
+      wrap.addEventListener('click', () => handleCardClick(wrap, proj));
+      row.appendChild(wrap);
+    });
+
+    // ── Modal ────────────────────────────────────────────────────────────────
+    const overlay = document.getElementById('modal-overlay');
+    const modalClose = document.getElementById('modal-close');
+    const mVisual = document.getElementById('modal-visual');
+    const mDetail = document.getElementById('modal-detail');
+
+    let activeCard = null;
+
+    function handleCardClick(wrap, proj) {
+      if (activeCard) return; // takla bitene kadar tekrar tıklamayı engelle
+      activeCard = wrap;
+
+      // 1. Kart takla atar
+      wrap.classList.add('flipping');
+
+      // 2. Takla yarısında (~275ms) modal içeriğini doldur ve aç
+      setTimeout(() => {
+        fillModal(proj);
+        openModal();
+      }, 275);
+
+      // 3. Takla bittikten sonra kartı sıfırla (modal arkada kalır)
+      setTimeout(() => {
+        wrap.classList.remove('flipping');
+      }, 600);
+    }
+
+    function fillModal(proj) {
+      // Sol: screenshot varsa img, yoksa logo placeholder
+      if (proj.screenshot) {
+        mVisual.innerHTML = `
+        <img class="modal-app-img" src="${proj.screenshot}" alt="${proj.name} ekran görüntüsü" />
+      `;
+      } else {
+        mVisual.innerHTML = `
+        <div class="modal-visual-placeholder">
+          <div class="modal-vlogo"><img src="${proj.logo}" alt="${proj.name}" /></div>
+          <div class="modal-vname">${proj.name}</div>
+        </div>
+      `;
+      }
+
+      // Sağ: detay
+      mDetail.innerHTML = `
+      <div class="modal-tag">${proj.tag}</div>
+      <div class="modal-name">${proj.name}</div>
+      <p class="modal-desc">${proj.desc}</p>
+      <div class="modal-team-label">— Ekip</div>
+      <div class="modal-team">
+        ${proj.team.map(m => `
+          <div class="modal-member">
+            <span class="modal-role">${m.role}</span>
+            <span class="modal-mname">${m.name}</span>
+          </div>
+        `).join('')}
+      </div>
+      <div class="modal-footer">
+        <a href="${proj.link}" class="modal-btn">Projeyi Gör →</a>
+        <button class="modal-btn-ghost" id="modal-back-btn">Kapat</button>
+      </div>
+    `;
+
+      document.getElementById('modal-back-btn')
+        .addEventListener('click', closeModal);
+    }
+
+    function openModal() {
+      overlay.classList.add('visible');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal() {
+      overlay.classList.remove('visible');
+      document.body.style.overflow = '';
+      // Animasyon bitince reset
+      setTimeout(() => {
+        mVisual.innerHTML = '';
+        mDetail.innerHTML = '';
+        activeCard = null;
+      }, 350);
+    }
+
+    modalClose.addEventListener('click', closeModal);
+    overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+  </script>
+</body>
+
+</html>
